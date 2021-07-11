@@ -7,3 +7,7 @@ psycopg2-binary==2.8.6
 python-decouple==3.4
 pytz==2021.1
 sqlparse==0.4.1
+# pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+google-api-python-client==2.12.0
+google-auth-httplib2==0.1.0
+google-auth-oauthlib==0.4.4
