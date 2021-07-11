@@ -1,4 +1,5 @@
 # My workspace
+.secret/*
 
 # vscode settings
 .vscode/*
