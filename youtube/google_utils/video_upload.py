@@ -50,3 +50,53 @@ service.thumbnails().set(
     media_body=MediaFileUpload('thumbnail.png')
 ).execute()
 
+'''
+# Response data
+print(response_upload)
+{
+    'kind': 'youtube#video', 
+    'etag': 'WfLyYwJhzVHW-oOQOCGnavMb2QQ', 
+    'id': '7Gq5lkoE2vw', 
+    'snippet': {
+        'publishedAt': '2021-07-12T17:16:55Z', 
+        'channelId': 'UCqlil5nuDW94jq9Py6sA-yw', 
+        'title': 'Upload Testing', 
+        'description': 'Hello World Description', 
+        'thumbnails': {
+            'default': {
+                'url': 'https://i9.ytimg.com/vi/7Gq5lkoE2vw/default.jpg?sqp=CJTxsYcG&rs=AOn4CLDX4x_VdpNxhQXwDggSTXG-jB8dOw', 
+                'width': 120, 
+                'height': 90
+            }, 
+            'medium': {
+                'url': 'https://i9.ytimg.com/vi/7Gq5lkoE2vw/mqdefault.jpg?sqp=CJTxsYcG&rs=AOn4CLAUMkuD3m6qGUyhN-3qI3QBvFbBmA', 
+                'width': 320, 
+                'height': 180
+            }, 
+            'high': {
+                'url': 'https://i9.ytimg.com/vi/7Gq5lkoE2vw/hqdefault.jpg?sqp=CJTxsYcG&rs=AOn4CLDdju-P9__ZjfiqYqQaT7UBrBk3TQ', 
+                'width': 480, 
+                'height': 360
+            }
+        }, 
+        'channelTitle': 'Albert Jhon', 
+        'tags': ['Travel', 'Travel Tips', 'video test'], 
+        'categoryId': '22', 
+        'liveBroadcastContent': 'none', 
+        'localized': {
+            'title': 'Upload Testing', 
+            'description': 'Hello World Description'
+        }
+    }, 
+    'status': {
+        'uploadStatus': 'uploaded', 
+        'privacyStatus': 'private', 
+        'publishAt': '2021-07-12T22:30:00Z', 
+        'license': 'youtube', 
+        'embeddable': True, 
+        'publicStatsViewable': True, 
+        'selfDeclaredMadeForKids': False
+    }
+}
+'''
+
