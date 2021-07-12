@@ -43,7 +43,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # local apps
     'youtube',
+
+    # third party apps
+    'django_youtube',
 ]
 
 MIDDLEWARE = [
@@ -127,3 +132,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+
+# django-youtube package settings
+YOUTUBE_AUTH_EMAIL = config('YOUTUBE_AUTH_EMAIL')
+YOUTUBE_AUTH_PASSWORD = config('YOUTUBE_AUTH_PASSWORD')
+YOUTUBE_DEVELOPER_KEY = config('YOUTUBE_DEVELOPER_KEY') # 'developer key, get one from http://code.google.com/apis/youtube/dashboard/'
+YOUTUBE_CLIENT_ID = config('YOUTUBE_CLIENT_ID') # 'client-id'
