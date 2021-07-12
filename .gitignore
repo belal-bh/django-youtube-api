@@ -1,5 +1,6 @@
 # My workspace
 .secret/*
+youtube/google_utils/token_youtube_v3.pickle
 
 # vscode settings
 .vscode/*
