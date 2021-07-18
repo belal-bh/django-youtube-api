@@ -15,3 +15,8 @@ google-api-python-client==2.13.0
 google-auth==1.32.1
 google-auth-oauthlib==0.4.4
 google-auth-httplib2==0.1.0
+
+# django-model-utils for handy utils
+django-model-utils==4.1.1
+
+django-crispy-forms

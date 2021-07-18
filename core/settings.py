@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'youtube',
 
     # third party apps
+    'crispy_forms',
 ]
 
 MIDDLEWARE = [
@@ -131,3 +132,15 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
+
+# YOUTUBE_API_CONFIG of youtube app
+YOUTUBE_API_CONFIG = {
+    'CLIENT_SECRET_FILE': config('YOUTUBE_API_CONFIG_CLIENT_SECRET_FILE'),
+    'API_NAME': config('YOUTUBE_API_CONFIG_API_NAME', default='youtube'),
+    'API_VERSION': config('YOUTUBE_API_CONFIG_API_VERSION', default='v3'),
+    'SCOPES': config('YOUTUBE_API_CONFIG_API_NAME', cast=Csv, default='https://www.googleapis.com/auth/youtube.upload'),
+    'CLIENT_ID': config('YOUTUBE_API_CONFIG_API_NAME', default=None),
+}
