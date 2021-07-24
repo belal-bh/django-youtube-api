@@ -141,6 +141,6 @@ YOUTUBE_API_CONFIG = {
     'CLIENT_SECRET_FILE': config('YOUTUBE_API_CONFIG_CLIENT_SECRET_FILE'),
     'API_NAME': config('YOUTUBE_API_CONFIG_API_NAME', default='youtube'),
     'API_VERSION': config('YOUTUBE_API_CONFIG_API_VERSION', default='v3'),
-    'SCOPES': config('YOUTUBE_API_CONFIG_API_NAME', cast=Csv, default='https://www.googleapis.com/auth/youtube.upload'),
-    'CLIENT_ID': config('YOUTUBE_API_CONFIG_API_NAME', default=None),
+    'SCOPES': config('YOUTUBE_API_CONFIG_SCOPES', cast=Csv(cast=str, post_process=list), default=['https://www.googleapis.com/auth/youtube.upload']),
+    'CLIENT_ID': config('YOUTUBE_API_CONFIG_CLIENT_ID', default=None),
 }
