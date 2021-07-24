@@ -1,11 +1,11 @@
-from datetime import datetime, timedelta
-
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
+from django.utils.timezone import now, timedelta
 from django.utils.translation import ugettext as _
 from model_utils.models import TimeStampedModel
+
 from .utils.api import YTApi
 
 User = get_user_model()
@@ -45,7 +45,7 @@ class YTVideo(TimeStampedModel):
                                                "and are updating the snippet part of a video resource."))
     privacy_status = models.CharField(max_length=10, choices=PrivacyStatus.choices,
                                       default=PrivacyStatus.PRIVATE, help_text=_("The video's privacy status."))
-    publish_at = models.DateTimeField(default=datetime.now() + timedelta(publish_at_day_after), help_text=_(
+    publish_at = models.DateTimeField(default=now() + timedelta(days=publish_at_day_after), help_text=_(
         "The date and time when the video is scheduled to publish. "
         "It can be set only if the privacy status of the video is private. "
         "The value is specified in ISO 8601 format."))
@@ -76,21 +76,51 @@ class YTVideo(TimeStampedModel):
         # do_something_else()
         print("after super save")
 
+    @property
+    def publish_at_iso(self):
+        return self.publish_at.isoformat()
+
+
 @receiver(pre_save, sender=YTVideo)
 def pre_save_ytvideo_receiver(sender, instance, *args, **kwargs):
     if instance:
-        api = YTApi()
-        success, response = api.initialize_upload(instance, instance.file_on_server.path)
-        print(success, response)
-        instance.video_id = response['id']
-        print(instance)
+        # api = YTApi()
+        # success, response = api.initialize_upload(instance, instance.file_on_server.path)
+        # print(success, response)
+        # instance.video_id = response['id']
+        # print(instance)
         print("pre_save_ytvideo_receiver -> OK")
     else:
         print("pre_save_ytvideo_receiver -> instance was None!")
 
+
 @receiver(post_save, sender=YTVideo)
 def post_save_ytvideo_receiver(sender, instance, created, *args, **kwargs):
     if instance:
+        # print("post_save_ytvideo_receiver start!")
+        if not instance.video_id:
+            # print(
+            #     f"path:{instance.file_on_server.path}, url:{instance.file_on_server.url}")
+            api = YTApi()
+            try:
+                success, response = api.initialize_upload(
+                    instance, instance.file_on_server.path)
+            except Exception as error:
+                raise error
+            if success:
+                # print(success, response)
+                instance.video_id = response['id']
+                # print(instance)
+                try:
+                    instance.file_on_server.delete(save=False)
+                except Exception as error:
+                    raise error
+                instance.save()
+        if instance.video_id and instance.file_on_server:
+            try:
+                instance.file_on_server.delete(save=True)
+            except Exception as error:
+                raise error
         print("post_save_ytvideo_receiver done!")
     else:
         print("post_save_ytvideo_receiver instance is None!")

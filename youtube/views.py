@@ -1,6 +1,5 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
-from django.template import context
 
 from .forms import YTVideoForm
 
@@ -11,8 +10,14 @@ def upload(request):
     form = YTVideoForm(request.POST or None, request.FILES or None)
     if request.method == "POST":
         if form.is_valid():
-            video = form.save()
-            status = f"Upload complete. video id: {video.video_id}"
+            video = form.save(commit=False)
+            video.user = request.user
+            try:
+                video.save()
+                status = 'SUCCESS'
+            except Exception as error:
+                print("ERROR:", error)
+                status = 'FAILED'
             form = YTVideoForm()
     context = {
         'form': form,
@@ -20,4 +25,3 @@ def upload(request):
     }
 
     return render(request, 'youtube/upload.html', context)
-    

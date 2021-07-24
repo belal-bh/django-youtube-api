@@ -201,8 +201,8 @@ class YTApi:
             status=dict(
                 privacyStatus=ytv_instance.privacy_status,
                 embeddable=ytv_instance.embeddable,
-                publishAt=ytv_instance.publish_at,
-                madeForKids=ytv_instance.made_for_kids,
+                publishAt=ytv_instance.publish_at_iso,
+                selfDeclaredMadeForKids=ytv_instance.made_for_kids,
             )
         )
 
