@@ -52,96 +52,123 @@ class YTApiError(BaseException):
     pass
 
 
-def get_authenticated_service():
-    """
-    Generate authenticated service using setting.YOUTUBE_API_CONFIG credentials.
-    """
-    # The CLIENT_SECRETS_FILE variable specifies the name of a file that contains
-    # the OAuth 2.0 information for this application, including its client_id and
-    # client_secret. You can acquire an OAuth 2.0 client ID and client secret from
-    # the Google API Console at
-    # https://console.developers.google.com/.
-    # Please ensure that you have enabled the YouTube Data API for your project.
-    # For more information about using OAuth2 to access the YouTube Data API, see:
-    #   https://developers.google.com/youtube/v3/guides/authentication
-    # For more information about the client_secrets.json file format, see:
-    #   https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
-    YT_SECRET_DIR = settings.BASE_DIR / '.yt_secrets'
-    try:
-        # relative path from BASE_DIR
-        CLIENT_SECRET_FILE = YT_SECRET_DIR / settings.YOUTUBE_API_CONFIG.get(
-            'CLIENT_SECRET_FILE')
-    except AttributeError:
-        raise OperationError(
-            "Youtube CLIENT_SECRET_FILE is missing on settings.")
-
-    # This OAuth 2.0 access scope allows an application to upload files to the
-    # authenticated user's YouTube channel, but doesn't allow other types of access.
-    try:
-        API_NAME = settings.YOUTUBE_API_CONFIG.get(
-            'API_NAME', 'youtube')
-    except AttributeError:
-        raise OperationError(
-            "Youtube API_NAME is missing on settings.")
-    try:
-        API_VERSION = settings.YOUTUBE_API_CONFIG.get(
-            'API_VERSION', 'v3')
-    except AttributeError:
-        raise OperationError(
-            "Youtube API_VERSION is missing on settings.")
-    try:
-        SCOPES = settings.YOUTUBE_API_CONFIG.get(
-            'SCOPES', ['https://www.googleapis.com/auth/youtube.upload'])
-    except AttributeError:
-        raise OperationError(
-            "Youtube SCOPES is missing on settings.")
-    try:
-        # client id is not required but will be used for other features like analytics
-        CLIENT_ID = settings.YOUTUBE_API_CONFIG.get('CLIENT_ID', None)
-    except AttributeError:
-        CLIENT_ID = None
-
-    # Check CLIENT_SECRET_FILE is exist or not
-    if not Path.exists(CLIENT_SECRET_FILE):
-        raise FileNotFoundError(
-            errno.ENOENT, os.strerror(errno.ENOENT), CLIENT_SECRET_FILE)
-
-    cred = None
-    pickle_file = YT_SECRET_DIR / f'token_{API_NAME}_{API_VERSION}.pickle'
-
-    if Path.exists(pickle_file):
-        with open(pickle_file, 'rb') as token:
-            cred = pickle.load(token)
-
-    if not cred or not cred.valid:
-        if cred and cred.expired and cred.refresh_token:
-            cred.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                CLIENT_SECRET_FILE, SCOPES)
-            cred = flow.run_local_server()
-
-        with open(pickle_file, 'wb') as token:
-            pickle.dump(cred, token)
-
-    try:
-        service = build(API_NAME, API_VERSION, credentials=cred)
-        print(API_NAME, 'service created successfully')
-        return service
-    except Exception as e:
-        print('Unable to connect.')
-        print(e)
-        return None
-
-
 class YTApi:
     """
     YouTube Wrapper API
     see: https://developers.google.com/youtube/v3
     """
 
+    def yt_api_get_authenticated_service():
+        """
+        Generate authenticated service using setting.YOUTUBE_API_CONFIG credentials.
+        """
+        # The CLIENT_SECRETS_FILE variable specifies the name of a file that contains
+        # the OAuth 2.0 information for this application, including its client_id and
+        # client_secret. You can acquire an OAuth 2.0 client ID and client secret from
+        # the Google API Console at
+        # https://console.developers.google.com/.
+        # Please ensure that you have enabled the YouTube Data API for your project.
+        # For more information about using OAuth2 to access the YouTube Data API, see:
+        #   https://developers.google.com/youtube/v3/guides/authentication
+        # For more information about the client_secrets.json file format, see:
+        #   https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
+        YT_SECRET_DIR = settings.BASE_DIR / '.yt_secrets'
+        try:
+            # relative path from BASE_DIR
+            CLIENT_SECRET_FILE = YT_SECRET_DIR / settings.YOUTUBE_API_CONFIG.get(
+                'CLIENT_SECRET_FILE')
+        except AttributeError:
+            raise OperationError(
+                "Youtube CLIENT_SECRET_FILE is missing on settings.")
+
+        # This OAuth 2.0 access scope allows an application to upload files to the
+        # authenticated user's YouTube channel, but doesn't allow other types of access.
+        try:
+            API_NAME = settings.YOUTUBE_API_CONFIG.get(
+                'API_NAME', 'youtube')
+        except AttributeError:
+            raise OperationError(
+                "Youtube API_NAME is missing on settings.")
+        try:
+            API_VERSION = settings.YOUTUBE_API_CONFIG.get(
+                'API_VERSION', 'v3')
+        except AttributeError:
+            raise OperationError(
+                "Youtube API_VERSION is missing on settings.")
+        try:
+            SCOPES = settings.YOUTUBE_API_CONFIG.get(
+                'SCOPES', ['https://www.googleapis.com/auth/youtube.upload'])
+        except AttributeError:
+            raise OperationError(
+                "Youtube SCOPES is missing on settings.")
+        try:
+            # client id is not required but will be used for other features like analytics
+            CLIENT_ID = settings.YOUTUBE_API_CONFIG.get('CLIENT_ID', None)
+        except AttributeError:
+            CLIENT_ID = None
+
+        # Check CLIENT_SECRET_FILE is exist or not
+        if not Path.exists(CLIENT_SECRET_FILE):
+            raise FileNotFoundError(
+                errno.ENOENT, os.strerror(errno.ENOENT), CLIENT_SECRET_FILE)
+
+        cred = None
+        pickle_file = YT_SECRET_DIR / f'token_{API_NAME}_{API_VERSION}.pickle'
+
+        if Path.exists(pickle_file):
+            with open(pickle_file, 'rb') as token:
+                cred = pickle.load(token)
+
+        if not cred or not cred.valid:
+            if cred and cred.expired and cred.refresh_token:
+                try:
+                    cred.refresh(Request())
+                except Exception as error:
+                    # This should not happen
+                    # If this happen we have to consider
+                    # it can happen when CLIENT_SECRET_FILE or Access to data api changed
+                    # we must have to debug it
+
+                    """
+                    # bellow this section we are tring to regenerate cred
+                    # with CLIENT_SECRET_FILE and SCOPES
+                    # but this will in browser to authenticate the cred
+                    # that's not expected for user
+                    # so that we are commenting out this section
+                    try:
+                        flow = InstalledAppFlow.from_client_secrets_file(
+                            CLIENT_SECRET_FILE, SCOPES)
+                        cred = flow.run_local_server()
+                    except Exception as error:
+                        raise error
+                    """
+
+                    # now just raising the YTApiError error
+                    raise YTApiError(error)
+            else:
+                # bellow this section we are tring to regenerate cred
+                # with CLIENT_SECRET_FILE and SCOPES
+                # but this will in browser to authenticate the cred
+                # that's not expected for user
+                # so that we should comment out this section
+                try:
+                    flow = InstalledAppFlow.from_client_secrets_file(
+                        CLIENT_SECRET_FILE, SCOPES)
+                    cred = flow.run_local_server()
+                except Exception as error:
+                    raise error
+
+            with open(pickle_file, 'wb') as token:
+                pickle.dump(cred, token)
+
+        try:
+            service = build(API_NAME, API_VERSION, credentials=cred)
+            return service
+        except Exception as error:
+            raise YTApiError(error)
+
     # yt_service is a shared resource
-    yt_service = get_authenticated_service()
+    yt_service = yt_api_get_authenticated_service()
 
     def __init__(self):
         # TODO: need some custom check LATER
@@ -152,7 +179,7 @@ class YTApi:
         Upload video from browser
         Raises:
             YTApiError: on no authentication
-        
+
         return: success, response
             success: True or False
             response: YTApi.yt_service.videos().insert() response
@@ -160,7 +187,7 @@ class YTApi:
         # Raise YTApiError if not authenticated
         if not self.authenticated:
             raise YTApiError(_("Authentication is required"))
-        
+
         # generate
         # See: https://developers.google.com/youtube/v3/docs/videos/insert
         # and https://developers.google.com/youtube/v3/docs/videos#resource
@@ -175,7 +202,7 @@ class YTApi:
                 privacyStatus=ytv_instance.privacy_status,
                 embeddable=ytv_instance.embeddable,
                 publishAt=ytv_instance.publish_at,
-                madeForKids = ytv_instance.made_for_kids,
+                madeForKids=ytv_instance.made_for_kids,
             )
         )
 
@@ -194,7 +221,8 @@ class YTApi:
             # practice, but if you're using Python older than 2.6 or if you're
             # running on App Engine, you should set the chunksize to something like
             # 1024 * 1024 (1 megabyte).
-            media_body=MediaFileUpload(media_file, chunksize=-1, resumable=True),
+            media_body=MediaFileUpload(
+                media_file, chunksize=-1, resumable=True),
             notifySubscribers=ytv_instance.notify_subscribers,
         )
 
@@ -205,7 +233,7 @@ class YTApi:
     def resumable_upload(self, request):
         """
         Upload video chunk by chunk
-        
+
         return: success, response
             success: True or False
             response: YTApi.yt_service.videos().insert() response
@@ -253,7 +281,7 @@ class YTApi:
         Upload video thumbnail
         Raises:
             YTApiError: on no authentication
-        
+
         return:
             response: YTApi.yt_service.thumbnails().set() response
         """
@@ -267,7 +295,6 @@ class YTApi:
         ).execute()
 
         return response_thumbnail
-
 
     def upload_video(self, request_body, media_file):
         """
