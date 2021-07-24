@@ -3,6 +3,9 @@
 .yt_secrets
 youtube/google_utils/token_youtube_v3.pickle
 
+# media files dir
+media_root/*
+
 # vscode settings
 .vscode/*
 
