@@ -243,13 +243,13 @@ class YTApi:
         retry = 0
         while response is None:
             try:
-                print('Uploading file...')
                 status, response = request.next_chunk()
+                # print('Uploading file...')
                 if response is not None:
                     if 'id' in response:
-                        print('Video id "%s" was successfully uploaded.' %
-                              response['id'])
-                        print('response:', response)
+                        # print('Video id "%s" was successfully uploaded.' %
+                        #       response['id'])
+                        # print('response:', response)
                         return True, response
                     else:
                         # exit(

@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import post_save, pre_save, pre_delete
 from django.dispatch import receiver
 from django.utils.timezone import now, timedelta
 from django.utils.translation import ugettext as _
@@ -70,18 +70,62 @@ class YTVideo(TimeStampedModel):
         return f"{self.id}:{self.title}"
 
     def save(self, *args, **kwargs):
-        # do_something()
-        print("before super save")
         super().save(*args, **kwargs)
-        # do_something_else()
-        print("after super save")
+        if not self.video_id and self.file_on_server:
+            try:
+                self.upload_to_youtube()
+            except Exception as error:
+                raise error
+
+
+    def upload_to_youtube(self):
+        """
+        Upload video file to Youtube and update YTVideo instance.
+
+        If raised any exception it delete the instance including video file 
+        because this function may be called after super().save() method.
+
+        If upload success then it delete video file from server and update 
+        YTVideo instance
+        """
+        if not self.video_id and self.file_on_server.path:
+            api = YTApi()
+            try:
+                success, response = api.initialize_upload(
+                    self, self.file_on_server.path)
+            except Exception as error:
+                self.delete()
+                raise error
+            if success:
+                self.video_id = response['id']
+                try:
+                    self.file_on_server.delete(save=False)
+                except Exception as error:
+                    raise error
+                self.save()
+            else:
+                self.delete()
+                raise Exception(
+                    "YouTube upload failed! Then YTVideo instance deleted.")
 
     @property
     def publish_at_iso(self):
         return self.publish_at.isoformat()
 
 
-@receiver(pre_save, sender=YTVideo)
+@receiver(pre_delete, sender=YTVideo)
+def pre_delete_ytvideo_receiver(sender, instance, *args, **kwargs):
+    """
+    pre_delete signal to delete file_on_server of YTVideo instance if exist.
+    """
+    try:
+        if instance.file_on_server:
+            instance.file_on_server.delete(save=False)
+    except:
+        pass
+
+"""
+# @receiver(pre_save, sender=YTVideo)
 def pre_save_ytvideo_receiver(sender, instance, *args, **kwargs):
     if instance:
         # api = YTApi()
@@ -94,7 +138,7 @@ def pre_save_ytvideo_receiver(sender, instance, *args, **kwargs):
         print("pre_save_ytvideo_receiver -> instance was None!")
 
 
-@receiver(post_save, sender=YTVideo)
+# @receiver(post_save, sender=YTVideo)
 def post_save_ytvideo_receiver(sender, instance, created, *args, **kwargs):
     if instance:
         # print("post_save_ytvideo_receiver start!")
@@ -124,3 +168,5 @@ def post_save_ytvideo_receiver(sender, instance, created, *args, **kwargs):
         print("post_save_ytvideo_receiver done!")
     else:
         print("post_save_ytvideo_receiver instance is None!")
+
+"""
